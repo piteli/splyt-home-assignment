@@ -1,8 +1,7 @@
-import express from 'express';
 import { getAPI } from "../services/api.service";
+require('dotenv').config();
 
-const app = express();
-const googleKey = app.locals.googleKey;
+const googleKey = process.env.GOOGLE_API_KEY;
 
 export const getTaxis = (req: any, res: any) => {
     res.json({status: true});
@@ -13,10 +12,9 @@ export const getCurrentLocation = (req: any, res: any) => {
     .then((result) => {
         const mergeObject = Object.assign(result, {success: true});
         res.json(mergeObject);
-        
     })
     .catch((err) => {
-        res.json({success: false, message: 'failed to retrieve current location'});
+        res.json({success: false, message: err});
     });
 }
 

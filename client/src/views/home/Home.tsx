@@ -12,7 +12,7 @@ import {
 import { officesLocation } from './Home.model';
 import ApiService from '../../services/api.service';
 import { AUTHENTICATION_TYPE } from '../../utils/constants/http.constant';
-import { GET_OFFICES_LOCATION } from '../../utils/constants/api.constant';
+import { GET_OFFICES_LOCATION, GET_CURRENT_LOCATION } from '../../utils/constants/api.constant';
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -22,21 +22,28 @@ function HomeView() {
     const [offices, setOffices] = React.useState([]);
     const [officeLocation, setOfficeLocation] = React.useState<any>(null);
     const [currentLocation, setCurrentLocation] = React.useState<any>(null);
+    
+    const onLoadOfficeMarker = React.useCallback(function callback(marker) {
+        marker.setIcon(require('../../assets/icons/office_marker.png'));
+    }, []); 
+
     React.useEffect(() => retrieveOfficesLocation(), []);
+    React.useEffect(() => getCurrentLocationFromAPI(), []);
     
     function officeChange(locationString: any) {
         const location = JSON.parse(locationString);
-        setOfficeLocation(location);
-        setCenterZoom();
+        createMarkerAndSetLocation(location);
+        // setCenterZoom();
     }
 
     function getCurrentLocationFromAPI() {
-        new ApiService().get(GET_OFFICES_LOCATION, AUTHENTICATION_TYPE.NONE)
+        new ApiService().get(GET_CURRENT_LOCATION, AUTHENTICATION_TYPE.NONE)
         .then((res) => res.json())
         .then((res) => {
-            
+            console.log('here is data');
+            console.log(res);
         }).catch((err) => {
-            
+            console.log('here is a err', err);
         })
     }
 
@@ -56,11 +63,14 @@ function HomeView() {
         .then((res) => {
             const offices = res.data;
             setOffices(offices);
-            setOfficeLocation(offices[0].location);
-            getCurrentLocationFromAPI();
+            createMarkerAndSetLocation(offices[0].location);
         }).catch((err) => {
             waitingToRetry(retrieveOfficesLocation);
         })
+    }
+
+    function createMarkerAndSetLocation(location: any) {
+        setOfficeLocation(location);
     }
     
     function waitingToRetry(func: any) {
@@ -68,7 +78,6 @@ function HomeView() {
     }
     
     function renderSelect(offices: officesLocation[]) {
-        console.log('here is offices', offices);
         return(
             <Select key={"2"} 
                 placeholder={'Select Office: ' + (offices.length > 0 ? `Default - ${offices[0].country}` : '')} 
@@ -111,7 +120,7 @@ function HomeView() {
                 {/* marker and infowindow is here  */}
                 {
                     officeLocation !== null ?
-                    <Marker position={officeLocation}></Marker> : <></>
+                    <Marker onLoad={onLoadOfficeMarker} position={officeLocation}></Marker> : <></>
                 }
             </MapComponent>
         </div>
