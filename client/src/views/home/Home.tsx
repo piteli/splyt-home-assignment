@@ -13,15 +13,17 @@ import { officesLocation } from './Home.model';
 import ApiService from '../../services/api.service';
 import { AUTHENTICATION_TYPE } from '../../utils/constants/http.constant';
 import { GET_OFFICES_LOCATION, GET_CURRENT_LOCATION } from '../../utils/constants/api.constant';
+import { getKilometerBetweenTwoPointsOfLatAndLng } from '../../utils/helper/math.helper';
 
 const { Option } = Select;
 const { Text } = Typography;
+const mockCurrentLocation = { lat: 6.0425528, lng: 116.1468417 };
 
 function HomeView() {
     const [map, setMap] = React.useState<any>(null);
     const [offices, setOffices] = React.useState([]);
     const [officeLocation, setOfficeLocation] = React.useState<any>(null);
-    const [currentLocation, setCurrentLocation] = React.useState<any>(null);
+    const [currentLocation, setCurrentLocation] = React.useState<any>(mockCurrentLocation);
     
     const onLoadOfficeMarker = React.useCallback(function callback(marker) {
         marker.setIcon(require('../../assets/icons/office_marker.png'));
@@ -32,8 +34,38 @@ function HomeView() {
     
     function officeChange(locationString: any) {
         const location = JSON.parse(locationString);
+
+        if(location === 'NEAR_ME') {
+            searchOfficeNearbyToMyLocation();
+        }
+        
         createMarkerAndSetLocation(location);
         // setCenterZoom();
+    }
+
+    function searchOfficeNearbyToMyLocation() {
+
+        let kmCollection: any[] = [];
+        const sourceLatitude = currentLocation.lat;
+        const sourceLongitude = currentLocation.lng;
+        const kmOffice = offices.map((item: any) => {
+            const destinationLatitude = item.location.lat;
+            const destinationLongitude = item.location.lng;
+            
+            const km = getKilometerBetweenTwoPointsOfLatAndLng(
+                sourceLatitude,
+                sourceLongitude,
+                destinationLatitude,
+                destinationLongitude
+            );
+
+            kmCollection.push(km);
+
+            return {...item, km};
+        });
+
+        const nearestKm = Math.min.apply(Math, kmCollection);
+        const nearestOffice = kmOffice.find((c) => c.km === nearestKm);
     }
 
     function getCurrentLocationFromAPI() {
@@ -83,10 +115,11 @@ function HomeView() {
                 placeholder={'Select Office: ' + (offices.length > 0 ? `Default - ${offices[0].country}` : '')} 
                 style={{ width: 120 }} onChange={officeChange}
             >
+            { offices.length > 0 ? <Option key={0} value={'NEAR_ME'}>Office Near Me</Option> : null }
             {
                 offices.map((item, index) => {
                     const locationString = JSON.stringify(item.location);
-                    return (<Option key={index} value={locationString}>{item.country}</Option>);
+                    return (<Option key={index + 1} value={locationString}>{item.country}</Option>);
                 })
             }
           </Select>
