@@ -17,6 +17,8 @@ import { getKilometerBetweenTwoPointsOfLatAndLng } from '../../utils/helper/math
 
 const { Option } = Select;
 const { Text } = Typography;
+
+//located in kota kinabalu, Sabah, Malaysia
 const mockCurrentLocation = { lat: 6.0425528, lng: 116.1468417 };
 
 function HomeView() {
@@ -29,6 +31,10 @@ function HomeView() {
         marker.setIcon(require('../../assets/icons/office_marker.png'));
     }, []); 
 
+    const onLoadCurrentMarker = React.useCallback(function callback(marker) {
+        marker.setIcon(require('../../assets/icons/me_marker.png'));
+    }, []);
+
     React.useEffect(() => retrieveOfficesLocation(), []);
     React.useEffect(() => getCurrentLocationFromAPI(), []);
     
@@ -37,10 +43,10 @@ function HomeView() {
 
         if(location === 'NEAR_ME') {
             searchOfficeNearbyToMyLocation();
+        } else {
+            createMarkerAndSetLocation(location);
+            setCenterZoom(location);
         }
-        
-        createMarkerAndSetLocation(location);
-        // setCenterZoom();
     }
 
     function searchOfficeNearbyToMyLocation() {
@@ -64,28 +70,33 @@ function HomeView() {
             return {...item, km};
         });
 
-        const nearestKm = Math.min.apply(Math, kmCollection);
-        const nearestOffice = kmOffice.find((c) => c.km === nearestKm);
+        const nearestKm = (Math.min.apply(Math, kmCollection)).toFixed(2);
+        const nearestOfficeIndex = kmOffice.findIndex((c) => c.km === nearestKm);
+
+        if(nearestOfficeIndex >= 0) {
+            const nearestLocation = kmOffice[nearestOfficeIndex].location;
+            createMarkerAndSetLocation(nearestLocation);
+            setCenterZoom(nearestLocation);
+        }
     }
 
     function getCurrentLocationFromAPI() {
         new ApiService().get(GET_CURRENT_LOCATION, AUTHENTICATION_TYPE.NONE)
         .then((res) => res.json())
         .then((res) => {
-            console.log('here is data');
             console.log(res);
         }).catch((err) => {
-            console.log('here is a err', err);
+            console.log(err);
         })
     }
 
-    function setCenterZoom() {
+    function setCenterZoom(location: any) {
         const bounds = new window.google.maps.LatLngBounds();
         bounds.extend(new window.google.maps.LatLng(officeLocation));
+        bounds.extend(new window.google.maps.LatLng(location));
         
         if(map !== null){
             map.fitBounds(bounds);
-            setMap(map);
         }
     }
     
@@ -96,6 +107,7 @@ function HomeView() {
             const offices = res.data;
             setOffices(offices);
             createMarkerAndSetLocation(offices[0].location);
+            setCenterZoom(offices[0].location);
         }).catch((err) => {
             waitingToRetry(retrieveOfficesLocation);
         })
@@ -115,7 +127,7 @@ function HomeView() {
                 placeholder={'Select Office: ' + (offices.length > 0 ? `Default - ${offices[0].country}` : '')} 
                 style={{ width: 120 }} onChange={officeChange}
             >
-            { offices.length > 0 ? <Option key={0} value={'NEAR_ME'}>Office Near Me</Option> : null }
+            { offices.length > 0 ? <Option key={0} value={JSON.stringify('NEAR_ME')}>Office Near Me</Option> : null }
             {
                 offices.map((item, index) => {
                     const locationString = JSON.stringify(item.location);
@@ -154,6 +166,10 @@ function HomeView() {
                 {
                     officeLocation !== null ?
                     <Marker onLoad={onLoadOfficeMarker} position={officeLocation}></Marker> : <></>
+                }
+                {
+                    currentLocation !== null ?
+                    <Marker onLoad={onLoadCurrentMarker} position={currentLocation}></Marker> : <></>
                 }
             </MapComponent>
         </div>
