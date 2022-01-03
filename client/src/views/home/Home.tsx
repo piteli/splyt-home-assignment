@@ -201,7 +201,9 @@ function HomeView() {
                     taxis.map((item: any) => {
                         const location = {lat: item.location.latitude, lng: item.location.longitude};
                         return (
-                            <Marker onLoad={onLoadTaxisMarker} position={location}></Marker>
+                            <Marker onLoad={onLoadTaxisMarker} 
+                            position={location}
+                            ></Marker>
                         );
                     }) : <></>
                 }
