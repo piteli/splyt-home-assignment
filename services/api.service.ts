@@ -2,7 +2,10 @@ import axios from 'axios';
 
 export function getAPI(url: string) {
     return new Promise((resolve: any, reject: any) => {
-        axios.get(url)
+        axios({
+            url,
+            responseType: 'json'
+        })
         .then((res) => {
             resolve(res);
         })

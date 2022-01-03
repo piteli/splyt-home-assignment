@@ -12,7 +12,7 @@ import {
 import { officesLocation } from './Home.model';
 import ApiService from '../../services/api.service';
 import { AUTHENTICATION_TYPE } from '../../utils/constants/http.constant';
-import { GET_OFFICES_LOCATION, GET_CURRENT_LOCATION } from '../../utils/constants/api.constant';
+import { GET_OFFICES_LOCATION, GET_CURRENT_LOCATION, GET_TAXIS } from '../../utils/constants/api.constant';
 import { getKilometerBetweenTwoPointsOfLatAndLng } from '../../utils/helper/math.helper';
 
 const { Option } = Select;
@@ -26,7 +26,11 @@ function HomeView() {
     const [offices, setOffices] = React.useState([]);
     const [officeLocation, setOfficeLocation] = React.useState<any>(null);
     const [currentLocation, setCurrentLocation] = React.useState<any>(mockCurrentLocation);
-    
+    const [taxis, setTaxis] = React.useState<any>([]);
+    const [noOfTaxis, setNoOfTaxis] = React.useState<number>(3);
+
+    let timeout: any = null;
+
     const onLoadOfficeMarker = React.useCallback(function callback(marker) {
         marker.setIcon(require('../../assets/icons/office_marker.png'));
     }, []); 
@@ -35,8 +39,16 @@ function HomeView() {
         marker.setIcon(require('../../assets/icons/me_marker.png'));
     }, []);
 
-    React.useEffect(() => retrieveOfficesLocation(), []);
-    React.useEffect(() => getCurrentLocationFromAPI(), []);
+    const onLoadTaxisMarker = React.useCallback(function callback(marker) {
+        marker.setIcon(require('../../assets/icons/car_marker.png'));
+    }, []);
+
+    React.useEffect(() => getTaxis() , [noOfTaxis]);
+
+    function onChangeSlider(value: number) {
+        if(timeout !== null) clearTimeout(timeout);
+        setTimeout(() => setNoOfTaxis(value), 1000);
+    }
     
     function officeChange(locationString: any) {
         const location = JSON.parse(locationString);
@@ -80,20 +92,34 @@ function HomeView() {
         }
     }
 
-    function getCurrentLocationFromAPI() {
-        new ApiService().get(GET_CURRENT_LOCATION, AUTHENTICATION_TYPE.NONE)
+    function getCurrentLocationFromAPI() { 
+        searchOfficeNearbyToMyLocation();
+        // new ApiService().get(GET_CURRENT_LOCATION, AUTHENTICATION_TYPE.NONE)
+        // .then((res) => res.json())
+        // .then((res) => {
+        //     searchOfficeNearbyToMyLocation();
+        //     console.log(res);
+        // }).catch((err) => {
+        //     console.log(err);
+        // })
+    }
+    
+    function getTaxis() {
+        const fullURL =`${GET_TAXIS}?latitude=${currentLocation.lat}&longitude=${currentLocation.lng}&count=${noOfTaxis}`;
+        new ApiService().get(fullURL, AUTHENTICATION_TYPE.NONE)
         .then((res) => res.json())
         .then((res) => {
-            console.log(res);
-        }).catch((err) => {
+            setTaxis(res.drivers);
+        })
+        .catch((err) => {
             console.log(err);
         })
     }
 
     function setCenterZoom(location: any) {
         const bounds = new window.google.maps.LatLngBounds();
-        bounds.extend(new window.google.maps.LatLng(officeLocation));
         bounds.extend(new window.google.maps.LatLng(location));
+        bounds.extend(new window.google.maps.LatLng(currentLocation));
         
         if(map !== null){
             map.fitBounds(bounds);
@@ -106,8 +132,7 @@ function HomeView() {
         .then((res) => {
             const offices = res.data;
             setOffices(offices);
-            searchOfficeNearbyToMyLocation();
-            setCenterZoom(offices[0].location);
+            getCurrentLocationFromAPI();
         }).catch((err) => {
             waitingToRetry(retrieveOfficesLocation);
         })
@@ -144,7 +169,7 @@ function HomeView() {
                 display: 'inline-block',
                 verticalAlign: 'middle'
             }}>
-                <Slider style={{ width: 80 }} defaultValue={3} />
+                <Slider onChange={onChangeSlider} min={3} max={30} style={{ width: 80 }} defaultValue={3} />
             </div>
         );
     }
@@ -155,13 +180,13 @@ function HomeView() {
                 title={'Splyt'}
                 extra={[
                     renderSlider(),
-                    <Text style={{marginRight: 20}}>3 Taxis shown</Text>,
+                    <Text style={{marginRight: 20}}>{noOfTaxis} Taxis shown</Text>,
                     renderSelect(offices)
                 ]}
             >
                 
             </PageHeader>
-            <MapComponent map={map} setMap={setMap}>
+            <MapComponent map={map} setMap={setMap} retrieveOfficesLocation={retrieveOfficesLocation}>
                 {/* marker and infowindow is here  */}
                 {
                     officeLocation !== null ?
@@ -170,6 +195,15 @@ function HomeView() {
                 {
                     currentLocation !== null ?
                     <Marker onLoad={onLoadCurrentMarker} position={currentLocation}></Marker> : <></>
+                }
+                {
+                    taxis.length > 0 ?
+                    taxis.map((item: any) => {
+                        const location = {lat: item.location.latitude, lng: item.location.longitude};
+                        return (
+                            <Marker onLoad={onLoadTaxisMarker} position={location}></Marker>
+                        );
+                    }) : <></>
                 }
             </MapComponent>
         </div>

@@ -16,9 +16,13 @@ function MapComponent(props: any) {
     const defaultLocation = {lat: 32.7502, lng: 114.7655};
 
     const onLoad = React.useCallback(function callback(map) {
-        const bounds = new window.google.maps.LatLngBounds();
-        map.fitBounds(bounds);
-        props.setMap(map);
+        if(props.hasOwnProperty('retrieveOfficesLocation')) {
+            props.retrieveOfficesLocation();
+        }
+
+        if(props.hasOwnProperty('setMap')) {
+            props.setMap(map);
+        }
     }, []);
 
     const onUnmount = React.useCallback(function callback(map) {
