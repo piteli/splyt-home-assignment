@@ -106,7 +106,7 @@ function HomeView() {
         .then((res) => {
             const offices = res.data;
             setOffices(offices);
-            createMarkerAndSetLocation(offices[0].location);
+            searchOfficeNearbyToMyLocation();
             setCenterZoom(offices[0].location);
         }).catch((err) => {
             waitingToRetry(retrieveOfficesLocation);
@@ -124,10 +124,10 @@ function HomeView() {
     function renderSelect(offices: officesLocation[]) {
         return(
             <Select key={"2"} 
-                placeholder={'Select Office: ' + (offices.length > 0 ? `Default - ${offices[0].country}` : '')} 
+                placeholder={'Select Office: ' + (offices.length > 0 ? `Default - Nearest Office` : '')} 
                 style={{ width: 120 }} onChange={officeChange}
             >
-            { offices.length > 0 ? <Option key={0} value={JSON.stringify('NEAR_ME')}>Office Near Me</Option> : null }
+            { offices.length > 0 ? <Option key={0} value={JSON.stringify('NEAR_ME')}>Nearest Office</Option> : null }
             {
                 offices.map((item, index) => {
                     const locationString = JSON.stringify(item.location);
