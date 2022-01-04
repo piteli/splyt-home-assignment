@@ -25,11 +25,12 @@ function HomeView() {
     const [map, setMap] = React.useState<any>(null);
     const [offices, setOffices] = React.useState([]);
     const [officeLocation, setOfficeLocation] = React.useState<any>(null);
-    const [currentLocation, setCurrentLocation] = React.useState<any>(mockCurrentLocation);
+    const [currentLocation, setCurrentLocation] = React.useState<any>(null);
     const [taxis, setTaxis] = React.useState<any>([]);
     const [noOfTaxis, setNoOfTaxis] = React.useState<number>(3);
 
-    let timeout: any = null;
+    let timeoutGetTaxis: any = null;
+    let timeoutGetRecentTaxisLocation: any = null;
 
     const onLoadOfficeMarker = React.useCallback(function callback(marker) {
         marker.setIcon(require('../../assets/icons/office_marker.png'));
@@ -46,8 +47,16 @@ function HomeView() {
     React.useEffect(() => getTaxis() , [noOfTaxis]);
 
     function onChangeSlider(value: number) {
-        if(timeout !== null) clearTimeout(timeout);
-        setTimeout(() => setNoOfTaxis(value), 1000);
+        if(timeoutGetTaxis !== null) {
+            clearTimeout(timeoutGetTaxis);
+            timeoutGetTaxis = null;
+        }
+
+        if(timeoutGetRecentTaxisLocation !== null) {
+            clearTimeout(timeoutGetRecentTaxisLocation);
+            timeoutGetRecentTaxisLocation = null;
+        }
+        timeoutGetTaxis = setTimeout(() => setNoOfTaxis(value), 1000);
     }
     
     function officeChange(locationString: any) {
@@ -93,15 +102,15 @@ function HomeView() {
     }
 
     function getCurrentLocationFromAPI() { 
-        searchOfficeNearbyToMyLocation();
-        // new ApiService().get(GET_CURRENT_LOCATION, AUTHENTICATION_TYPE.NONE)
-        // .then((res) => res.json())
-        // .then((res) => {
-        //     searchOfficeNearbyToMyLocation();
-        //     console.log(res);
-        // }).catch((err) => {
-        //     console.log(err);
-        // })
+        // searchOfficeNearbyToMyLocation();
+        new ApiService().get(GET_CURRENT_LOCATION, AUTHENTICATION_TYPE.NONE)
+        .then((res) => res.json())
+        .then((res) => {
+            searchOfficeNearbyToMyLocation();
+            console.log(res);
+        }).catch((err) => {
+            console.log(err);
+        })
     }
     
     function getTaxis() {
@@ -110,10 +119,15 @@ function HomeView() {
         .then((res) => res.json())
         .then((res) => {
             setTaxis(res.drivers);
+            readyToRefreshRecentTaxis();
         })
         .catch((err) => {
             console.log(err);
         })
+    }
+
+    function readyToRefreshRecentTaxis() {
+        timeoutGetRecentTaxisLocation = setTimeout(() => getTaxis(), 15000);
     }
 
     function setCenterZoom(location: any) {
