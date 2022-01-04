@@ -106,6 +106,7 @@ function HomeView() {
         new ApiService().get(GET_CURRENT_LOCATION, AUTHENTICATION_TYPE.NONE)
         .then((res) => res.json())
         .then((res) => {
+            setCurrentLocation(res.location);
             searchOfficeNearbyToMyLocation();
             console.log(res);
         }).catch((err) => {
