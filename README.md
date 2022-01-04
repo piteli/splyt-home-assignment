@@ -21,7 +21,10 @@ npm run start
 you will see a new tab or browser window open with React project running.
 
 ## Screenshots Result
-![Screenshot-1](https://i.ibb.co/5GNtkBS/screenshot-1.png)![Screenshot-2](https://i.ibb.co/RyRGw96/screenshot-2.png)![Screenshot-3](https://i.ibb.co/XFKN1yf/screenshot-3.png)![Screenshot-4](https://i.ibb.co/F0vsZ1G/screenshot-4.png)
+![Screenshot-1](https://i.ibb.co/5GNtkBS/screenshot-1.png)
+![Screenshot-2](https://i.ibb.co/RyRGw96/screenshot-2.png)
+![Screenshot-3](https://i.ibb.co/XFKN1yf/screenshot-3.png)
+![Screenshot-4](https://i.ibb.co/F0vsZ1G/screenshot-4.png)
 
 ## To Do
 
@@ -45,4 +48,4 @@ you will see a new tab or browser window open with React project running.
 ## Bugs Found
 | Bugs| Status|
 | ------------------------------------------------- | ---- |
-| when toggle offices or get recent taxis using Splyt API, auto center map between office marker and current location of user is not working properly in some time  |   WIP   |
+| when toggle offices or get recent taxis using Splyt API, auto center map between office marker and current location of user is not working properly in some time  |   ✔   |

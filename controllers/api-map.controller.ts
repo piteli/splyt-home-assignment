@@ -1,4 +1,4 @@
-import { getAPI } from "../services/api.service";
+import { getAPI, postAPI } from "../services/api.service";
 require('dotenv').config();
 
 const googleKey = process.env.GOOGLE_API_KEY;
@@ -18,7 +18,7 @@ export const getTaxis = (req: any, res: any) => {
 }
 
 export const getCurrentLocation = (req: any, res: any) => {
-    getAPI('https://www.googleapis.com/geolocation/v1/geolocate?key=' + googleKey)
+    postAPI('https://www.googleapis.com/geolocation/v1/geolocate?key=' + googleKey)
     .then((result: any) => {
         const mergeObject = Object.assign(result.data, {success: true});
         res.json(mergeObject);

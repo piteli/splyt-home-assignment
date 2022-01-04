@@ -44,7 +44,35 @@ function HomeView() {
         marker.setIcon(require('../../assets/icons/car_marker.png'));
     }, []);
 
-    React.useEffect(() => getTaxis() , [noOfTaxis]);
+    const isFirstRenderCurrentLocation = React.useRef(true);
+    const isFirstRenderNearbyToLocation = React.useRef(true);
+    const isFirstRenderOfficeLocation = React.useRef(true);
+
+    React.useEffect(() => {
+        if (isFirstRenderCurrentLocation.current) {
+            isFirstRenderCurrentLocation.current = false; // toggle flag after first render/mounting
+            return;
+        }
+        getCurrentLocationFromAPI();
+    }, [offices]);
+
+    React.useEffect(() => {
+        if (isFirstRenderNearbyToLocation.current) {
+            isFirstRenderNearbyToLocation.current = false; 
+            return;
+        }
+        createMarkerAndSetLocation();
+    }, [currentLocation]);
+
+    React.useEffect(() => {
+        if (isFirstRenderOfficeLocation.current) {
+            isFirstRenderOfficeLocation.current = false;
+            return;
+        }
+        setCenterZoom();
+        getTaxis();
+    }, [officeLocation]);
+
 
     function onChangeSlider(value: number) {
         if(timeoutGetTaxis !== null) {
@@ -56,7 +84,11 @@ function HomeView() {
             clearTimeout(timeoutGetRecentTaxisLocation);
             timeoutGetRecentTaxisLocation = null;
         }
-        timeoutGetTaxis = setTimeout(() => setNoOfTaxis(value), 1000);
+
+        setNoOfTaxis(value);
+        timeoutGetTaxis = setTimeout(() => {
+            getTaxis(value);
+        }, 2000);
     }
     
     function officeChange(locationString: any) {
@@ -66,12 +98,10 @@ function HomeView() {
             searchOfficeNearbyToMyLocation();
         } else {
             createMarkerAndSetLocation(location);
-            setCenterZoom(location);
         }
     }
 
     function searchOfficeNearbyToMyLocation() {
-
         let kmCollection: any[] = [];
         const sourceLatitude = currentLocation.lat;
         const sourceLongitude = currentLocation.lng;
@@ -97,25 +127,23 @@ function HomeView() {
         if(nearestOfficeIndex >= 0) {
             const nearestLocation = kmOffice[nearestOfficeIndex].location;
             createMarkerAndSetLocation(nearestLocation);
-            setCenterZoom(nearestLocation);
         }
     }
 
     function getCurrentLocationFromAPI() { 
-        // searchOfficeNearbyToMyLocation();
         new ApiService().get(GET_CURRENT_LOCATION, AUTHENTICATION_TYPE.NONE)
         .then((res) => res.json())
         .then((res) => {
             setCurrentLocation(res.location);
-            searchOfficeNearbyToMyLocation();
-            console.log(res);
         }).catch((err) => {
-            console.log(err);
+            waitingToRetry(getCurrentLocationFromAPI);
         })
     }
+
+
     
-    function getTaxis() {
-        const fullURL =`${GET_TAXIS}?latitude=${currentLocation.lat}&longitude=${currentLocation.lng}&count=${noOfTaxis}`;
+    function getTaxis(value: any = null) {
+        const fullURL =`${GET_TAXIS}?latitude=${currentLocation.lat}&longitude=${currentLocation.lng}&count=${value === null ? noOfTaxis : value}`;
         new ApiService().get(fullURL, AUTHENTICATION_TYPE.NONE)
         .then((res) => res.json())
         .then((res) => {
@@ -131,9 +159,9 @@ function HomeView() {
         timeoutGetRecentTaxisLocation = setTimeout(() => getTaxis(), 15000);
     }
 
-    function setCenterZoom(location: any) {
+    function setCenterZoom() {
         const bounds = new window.google.maps.LatLngBounds();
-        bounds.extend(new window.google.maps.LatLng(location));
+        bounds.extend(new window.google.maps.LatLng(officeLocation));
         bounds.extend(new window.google.maps.LatLng(currentLocation));
         
         if(map !== null){
@@ -147,13 +175,16 @@ function HomeView() {
         .then((res) => {
             const offices = res.data;
             setOffices(offices);
-            getCurrentLocationFromAPI();
         }).catch((err) => {
             waitingToRetry(retrieveOfficesLocation);
         })
     }
 
-    function createMarkerAndSetLocation(location: any) {
+    function createMarkerAndSetLocation(location: any = null) {
+        if(location === null) {
+            searchOfficeNearbyToMyLocation();
+            return;
+        }
         setOfficeLocation(location);
     }
     

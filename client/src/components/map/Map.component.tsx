@@ -13,8 +13,6 @@ function MapComponent(props: any) {
         // and retrieve by API and loaded it at here
     });
 
-    const defaultLocation = {lat: 32.7502, lng: 114.7655};
-
     const onLoad = React.useCallback(function callback(map) {
         if(props.hasOwnProperty('retrieveOfficesLocation')) {
             props.retrieveOfficesLocation();
@@ -35,7 +33,6 @@ function MapComponent(props: any) {
                 props.hasOwnProperty('mapContainerStyle') 
                 ? props.mapContainerStyle : defaultMapContainerStyle
             }
-            center={props.hasOwnProperty('location') ? props.location : defaultLocation}
             zoom={props.hasOwnProperty('zoom') ? props.zoom : 10}
             onLoad={onLoad}
             onUnmount={onUnmount}
