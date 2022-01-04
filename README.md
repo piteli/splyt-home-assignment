@@ -35,7 +35,7 @@ you will see a new tab or browser window open with React project running.
 |Centre the map on the location of the nearest Splyt office to the user's current location | ✔   |
 |Show most recent location of taxis in the surrounding area | ✔|
 |UI Slider - change the number of taxis displayed on the map |✔ |
-| Create Unit Test | WIP |
+| Create Unit Test |  |
 
 ## Nice To Have
 | Nice To Have | Status|
